@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ModernUIConverter": {
+      "commandName": "Project",
+      "commandLineArgs": "\"F:\\AcuSource\\CodeFeature\\WebSites\\Pure\\Site\\Pages\\AM\\AM207000.aspx\" \"F:\\TEMP\\ModernUIConverterOutput\""
+    }
+  }
+}
