@@ -28,7 +28,8 @@ namespace ModernUIConverter
 	PXActionState,
 	PXFieldOptions,
 	columnSettings,
-	headerDescription
+	headerDescription,
+	linkCommand
 } from 'client-controls';");
             _baseContent.AppendLine();
             _baseContent.Append(@"@graphInfo({ graphType: '");
@@ -95,12 +96,12 @@ namespace ModernUIConverter
 
             var sb = new StringBuilder();
 
+            sb.Append("\t");
+
             if (!string.IsNullOrEmpty(field.LinkCommand))
             {
                 sb.AppendFormat(linkCommandFormat, field.LinkCommand);
             }
-
-            sb.Append("\t");
 
             if (view.IsCollection == true && IsTypicalHideViewLink(field))
             {
