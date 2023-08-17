@@ -88,8 +88,6 @@ namespace ModernUIConverter
                 SetGraphType(node);
             }
 
-            var isFieldMode = false;
-            //var fields = new List<Field>();
             var fields = new Dictionary<string, Field>();
             var childPageContent = new List<PageContent>();
 
@@ -119,10 +117,10 @@ namespace ModernUIConverter
             }
             else if (pageContent.SectionType == ContentType.Tab)
             {
-                //skipNodes.Add("ITEMS");
                 skipNodes.Add("AUTOSIZE");
             }
 
+            var isFieldMode = false;
             var startFieldOrder = false;
             var fieldOrder = 0;
             var column = 0;
@@ -138,9 +136,8 @@ namespace ModernUIConverter
                 if (child?.Name != null && child.Name.ToUpper() == "PX:PXLAYOUTRULE")
                 {
                     isFieldMode = true;
-                    startFieldOrder = true;
+                    startFieldOrder = false;
 
-                    //var layoutRule  = ConvertToPageContent(child);
                     foreach (var att in child.Attributes)
                     {
                         if (string.IsNullOrWhiteSpace(att?.Name))

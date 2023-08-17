@@ -55,7 +55,7 @@ namespace ModernUIConverter
 
             if (view.Fields != null)
             {
-                foreach (var field in view.Fields)
+                foreach (var field in view.Fields.OrderBy(f => f.FieldOrder))
                 {
                     _viewsContent.AppendLine(ConstructFieldState(field, view));
                 }
