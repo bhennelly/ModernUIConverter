@@ -4,7 +4,7 @@ namespace ModernUIConverter
     [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class Field
     {
-        internal string DebuggerDisplay => $"{Name}";
+        internal string DebuggerDisplay => $"{Name} - {FieldOrder}";
 
         public string? Name { get; set; }
         public int Column { get; set; }
@@ -32,7 +32,7 @@ namespace ModernUIConverter
 
             DataMemeber = fieldMerge.DataMemeber ?? DataMemeber;
             Column = Math.Max(fieldMerge.Column, Column);
-            FieldOrder = Math.Max(fieldMerge.FieldOrder, FieldOrder);
+            FieldOrder = Math.Min(fieldMerge.FieldOrder, FieldOrder);
             DataMemeber = fieldMerge.DataMemeber ?? DataMemeber;
             Section = string.IsNullOrWhiteSpace(fieldMerge.Section) ? Section : fieldMerge.Section;
             LinkCommand = string.IsNullOrWhiteSpace(fieldMerge.LinkCommand) ? LinkCommand : fieldMerge.LinkCommand;

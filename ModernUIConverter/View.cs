@@ -1,8 +1,11 @@
 ﻿
 namespace ModernUIConverter
 {
+    [System.Diagnostics.DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class View
     {
+        internal string DebuggerDisplay => $"{Name}";
+
         public string Name { get; private set; }
         public bool IsCollection { get; private set; }
         public bool SyncPosition { get; set; }

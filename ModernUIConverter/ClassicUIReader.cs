@@ -166,7 +166,7 @@ namespace ModernUIConverter
                         field.DataMemeber = pageContent.DataMember;
                         field.Column = column;
                         field.Section = fieldGroup;
-                        field.FieldOrder = startFieldOrder ? fieldOrder++ : field.FieldOrder;
+                        field.FieldOrder = startFieldOrder ? ++fieldOrder : (field.FieldOrder == 0 ? 99 : field.FieldOrder);
 
                         if (fields.TryGetValue(field.Name, out var foundField))
                         {
