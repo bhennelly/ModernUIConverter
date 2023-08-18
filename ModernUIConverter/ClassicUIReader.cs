@@ -68,6 +68,7 @@ namespace ModernUIConverter
                     case "ID":
                         pageContent.ID = attribute.Value;
                         break;
+                    case "KEY":
                     case "DATAMEMBER":
                         pageContent.DataMember = attribute.Value;
                         break;

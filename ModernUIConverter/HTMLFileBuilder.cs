@@ -17,45 +17,155 @@ namespace ModernUIConverter
 
         public string GetFileContent() => _document.DocumentNode.OuterHtml;
 
-        public void AddPageContent(PageContent pageContent, HtmlNode? parentNode = null)
+        public void AddPageContent(PageContent pageContent)
+        {
+            AddPageContent(pageContent, _templateNode);
+        }
+
+
+        public void AddPageContent(PageContent pageContent, HtmlNode? parentNode)
+        {
+            if (pageContent == null)
+            {
+                throw new ArgumentNullException(nameof(pageContent));
+            }
+
+            if (parentNode == null)
+            {
+                throw new ArgumentNullException(nameof(parentNode));
+            }
+
+            if (pageContent.SectionType == ContentType.Tab)
+            {
+                BuildTabs(pageContent, parentNode);
+                return;
+            }
+            
+            if (pageContent.SectionType == ContentType.Panel)
+            {
+                BuildPanel(pageContent, parentNode);
+                return;
+            }
+            
+            if (pageContent.SectionType == ContentType.Form)
+            {
+                BuildForm(pageContent, parentNode);
+                return;
+            }
+            
+            if (pageContent.SectionType == ContentType.Grid)
+            {
+                BuildGrid(pageContent, parentNode);
+                return;
+            }
+            
+            if (pageContent.ChildContent == null)
+            {
+                return;
+            }
+
+            foreach (var childContent in pageContent.ChildContent)
+            {
+                AddPageContent(childContent, parentNode);
+            }
+        }
+
+        private void BuildPanel(PageContent pageContent, HtmlNode parentNode)
         {
             if (pageContent == null)
             {
                 return;
             }
 
-            if (parentNode == null)
-            {
-                parentNode = _templateNode;
-            }
+            var isLineDetail = pageContent.Caption == "Line Details";
 
-            if (pageContent.SectionType == ContentType.Tab)
-            {
-                BuildTabs(pageContent, parentNode);
-            }
-            else if (pageContent.SectionType == ContentType.Panel)
-            {
+            var panel = _document.CreateElement("qp-panel");
+            panel.SetAttributeValue("id", pageContent.DataMember);
+            panel.SetAttributeValue("title", pageContent.Caption);
+            panel.SetAttributeValue("auto-repaint", "true");
+            panel.SetAttributeValue("width", "80vw");
+            panel.SetAttributeValue("height", "80vh");
 
-            }
-            else if (pageContent.SectionType == ContentType.Form)
+            if (isLineDetail)
             {
-                BuildForm(pageContent, parentNode);
-            }
-            else if (pageContent.SectionType == ContentType.Grid)
-            {
-                BuildGrid(pageContent, parentNode);
-            }
-            else if (pageContent.ChildContent == null)
-            {
+                BuildPanelLineDetails(pageContent, panel);
+                parentNode.AppendChild(panel);
                 return;
             }
-            else
+
+            foreach (var childContent in pageContent.ChildContent)
             {
-                foreach (var childContent in pageContent.ChildContent)
+                if (childContent.SectionType == ContentType.Form)
                 {
-                    AddPageContent(childContent, parentNode);
+                    BuildForm(childContent, panel);
+                }
+
+                if (childContent.SectionType == ContentType.Grid)
+                {
+                    BuildGrid(childContent, panel);
                 }
             }
+
+
+            // TODO: buttons
+
+            parentNode.AppendChild(panel);
+        }
+
+        private void BuildPanelLineDetails(PageContent pageContent, HtmlNode parentNode)
+        {
+            var form = _document.CreateElement("div");
+            form.SetAttributeValue("class", "h-stack");
+
+            // Form Column 1
+            var formFieldSet1 = MakeFieldSetNode(
+                        id: "ss-first",
+                        dataMember: "LineSplittingExtension_LotSerOptions",
+                        caption: null,
+                        cssClass: "col-sm-12 col-md-6 col-lg-6",
+                        includeWGContainer: true);
+            formFieldSet1.AppendChild(MakeFieldNode("UnassignedQty"));
+            formFieldSet1.AppendChild(MakeFieldNode("Qty"));
+            form.AppendChild(formFieldSet1);
+
+            // Form Column 2
+            var formFieldSet2 = MakeFieldSetNode(
+            id: "ss-second",
+            dataMember: "LineSplittingExtension_LotSerOptions",
+            caption: null,
+            cssClass: "col-sm-12 col-md-6 col-lg-6",
+            includeWGContainer: true);
+            formFieldSet2.AppendChild(MakeFieldNode("StartNumVal"));
+            var btnField = MakeFieldNode("btnGenerateNbr");
+            var btnDiv = _document.CreateElement("div");
+            btnDiv.SetAttributeValue("class", "qp-field qp-field-wrapper");
+            var btnDivLabel = _document.CreateElement("div");
+            btnDivLabel.SetAttributeValue("class", "label-container");
+            btnDiv.AppendChild(btnDivLabel);
+            var qpButton = _document.CreateElement("qp-button");
+            qpButton.SetAttributeValue("id", "btnGenerate");
+            qpButton.SetAttributeValue("class", "control-container size-default");
+            qpButton.SetAttributeValue("state.bind", "LineSplittingExtension_GenerateNumbers");
+            btnDiv.AppendChild(qpButton);
+            btnField.AppendChild(btnDiv);
+            formFieldSet2.AppendChild(btnField);
+            form.AppendChild(formFieldSet2);
+
+            // Grid
+            var gridContent = pageContent.ChildContent?.Where(c => c.SectionType == ContentType.Grid)?.FirstOrDefault();
+            var grid = MakeGridNode(id: "gridSplits", cssClass: "stretch", dataMember: gridContent?.DataMember);
+
+
+            // button footer
+            var footer = _document.CreateElement("footer");
+            var footerButton = _document.CreateElement("qp-button");
+            footerButton.SetAttributeValue("id", "btnOK");
+            footerButton.SetAttributeValue("config.bind", "{text: SysMessages.Confirm, dialogResult: 1}");
+            footer.AppendChild(footerButton);
+
+            parentNode.AppendChild(form);
+            parentNode.AppendChild(grid);
+            parentNode.AppendChild(footer);
         }
 
         private void BuildTabs(PageContent pageContent, HtmlNode parentNode)
@@ -140,17 +250,13 @@ namespace ModernUIConverter
                 if (fieldSetNode == null)
                 {
                     fieldSetCounter++;
-                    fieldSetNode = _document.CreateElement("qp-fieldset");
-                    fieldSetNode.SetAttributeValue("id", $"fields{fieldSetCounter}C{field.Column}");
-                    fieldSetNode.SetAttributeValue("view.bind", pageContent.DataMember);
-                    if (!string.IsNullOrWhiteSpace(field.Section))
-                    {
-                        fieldSetNode.SetAttributeValue("caption", field.Section);
-                    }
+                    fieldSetNode = MakeFieldSetNode(
+                        id: $"fields{fieldSetCounter}C{field.Column}", 
+                        dataMember: pageContent.DataMember,
+                        caption: field.Section);
                 }
 
-                var fieldNode = _document.CreateElement("field");
-                fieldNode.SetAttributeValue("name", field.Name);
+                var fieldNode = MakeFieldNode(field.Name);
                 if (field.AllowEdit)
                 {
                     fieldNode.SetAttributeValue("config-allow-edit.bind", "true");
@@ -166,7 +272,7 @@ namespace ModernUIConverter
                 // Reset for next field set
                 columnFieldSets.Add(fieldSetNode);
                 fieldSetNode = null;
-                if (!nextField.HasSameColumn(field))
+                if (nextField != null && !nextField.HasSameColumn(field))
                 {
                     results[field.Column] = columnFieldSets;
                     columnFieldSets = new List<HtmlNode>();
@@ -176,15 +282,41 @@ namespace ModernUIConverter
             return results;
         }
 
+        private HtmlNode MakeFieldNode(string? fieldName)
+        {
+            var fieldNode = _document.CreateElement("field");
+            fieldNode.SetAttributeValue("name", fieldName);
+            return fieldNode;
+        }
+
+        private HtmlNode MakeFieldSetNode(string? id, string? dataMember, string? caption)
+        {
+            return MakeFieldSetNode(id, dataMember, caption, null, false);
+        }
+
+        private HtmlNode MakeFieldSetNode(string? id, string? dataMember, string? caption, string? cssClass, bool includeWGContainer)
+        {
+            var fieldSetNode = _document.CreateElement("qp-fieldset");
+            fieldSetNode.SetAttributeValue("id", id);
+            if (includeWGContainer)
+            {
+                fieldSetNode.SetAttributeValue("wg-container", "");
+            }
+            fieldSetNode.SetAttributeValue("view.bind", dataMember);
+            if (!string.IsNullOrWhiteSpace(caption))
+            {
+                fieldSetNode.SetAttributeValue("caption", caption);
+            }
+            if (!string.IsNullOrWhiteSpace(cssClass))
+            {
+                fieldSetNode.SetAttributeValue("class", cssClass);
+            }
+            return fieldSetNode;
+        }
+
         private void BuildGrid(PageContent pageContent, HtmlNode parentNode)
         {
-            var gridNode = _document.CreateElement("qp-grid");
-            if (!string.IsNullOrWhiteSpace(pageContent.ID))
-            {
-                gridNode.SetAttributeValue("id", pageContent.ID);
-            }
-            gridNode.SetAttributeValue("class", "stretch");
-            gridNode.SetAttributeValue("view.bind", pageContent.DataMember);
+            var gridNode = MakeGridNode(id: pageContent.ID, cssClass: "stretch", dataMember: pageContent.DataMember);
 
             var isPrimaryForm = parentNode.Name == "template";
             if (isPrimaryForm)
@@ -197,6 +329,21 @@ namespace ModernUIConverter
             }
 
             parentNode.AppendChild(gridNode);
+        }
+
+        private HtmlNode MakeGridNode(string? id, string? cssClass, string? dataMember)
+        {
+            var gridNode = _document.CreateElement("qp-grid");
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                gridNode.SetAttributeValue("id", id);
+            }
+            if (!string.IsNullOrWhiteSpace(cssClass))
+            {
+                gridNode.SetAttributeValue("class", cssClass);
+            }
+            gridNode.SetAttributeValue("view.bind", dataMember);
+            return gridNode;
         }
     }
 }
