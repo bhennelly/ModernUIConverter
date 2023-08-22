@@ -272,7 +272,7 @@ namespace ModernUIConverter
                 // Reset for next field set
                 columnFieldSets.Add(fieldSetNode);
                 fieldSetNode = null;
-                if (nextField != null && !nextField.HasSameColumn(field))
+                if (nextField == null || !nextField.HasSameColumn(field))
                 {
                     results[field.Column] = columnFieldSets;
                     columnFieldSets = new List<HtmlNode>();
