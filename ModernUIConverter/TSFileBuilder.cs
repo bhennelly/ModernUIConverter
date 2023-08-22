@@ -101,12 +101,13 @@ namespace ModernUIConverter
 
             sb.Append("\t");
 
-            if (!string.IsNullOrEmpty(field.LinkCommand))
+            var hasLinkCommand = !string.IsNullOrEmpty(field.LinkCommand);
+            if (hasLinkCommand)
             {
                 sb.AppendFormat(linkCommandFormat, field.LinkCommand);
             }
 
-            if (view.IsCollection == true && (IsTypicalHideViewLink(field) || IsAcctSubField(field)))
+            if (!hasLinkCommand && view.IsCollection == true && (IsTypicalHideViewLink(field) || IsAcctSubField(field)))
             {
                 sb.Append("@columnSettings({ hideViewLink: true }) ");
             }
