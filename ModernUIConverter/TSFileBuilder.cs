@@ -87,6 +87,9 @@ namespace ModernUIConverter
         private bool IsTypicalHideViewLink(Field field)
             => field?.Name != null && TypicalHideViewLinkFields.Contains(field.Name.ToUpper());
 
+        private bool IsAcctSubField(Field field) 
+            => field?.Name != null && (field.Name.ToUpper().Contains("ACCTID") || field.Name.ToUpper().Contains("SUBID"));
+
         private string ConstructFieldState(Field field, View view)
         {
             if (field?.Name == null)
@@ -103,7 +106,7 @@ namespace ModernUIConverter
                 sb.AppendFormat(linkCommandFormat, field.LinkCommand);
             }
 
-            if (view.IsCollection == true && IsTypicalHideViewLink(field))
+            if (view.IsCollection == true && (IsTypicalHideViewLink(field) || IsAcctSubField(field)))
             {
                 sb.Append("@columnSettings({ hideViewLink: true }) ");
             }
